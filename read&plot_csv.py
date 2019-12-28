@@ -6,7 +6,7 @@ layout = [					# Here's for the GUI window
 	[sg.Text('Variable you wanna plot: ')],
 	[sg.Listbox(values=['errorArray', 'angleArray', 'motorArray'],
 	default_values=['motorArray'], size=(20, 4),key='variable')],
-	[sg.Button('Save to csv'), sg.Checkbox('Enable PWM', default=True,key='pwm')],
+	# [sg.Button('Save to csv'), sg.Checkbox('Enable PWM', default=True,key='pwm')],
 	[sg.Submit(), sg.Cancel()]]
 window	= sg.Window('EE407 Term Project Plotting GUI', auto_size_text=True, default_element_size=(40, 1)).Layout(layout)
 while True:
