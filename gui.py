@@ -1,23 +1,25 @@
 import sys,time,os,serial,struct,serial.tools.list_ports
+import matplotlib.animation as animation
+import matplotlib.pyplot as plt
 import PySimpleGUI as sg
 import numpy as np
-sg.change_look_and_feel('DefaultNoMoreNagging')
+# sg.change_look_and_feel('DefaultNoMoreNagging')
 layout = [					# Here's for the GUI window
 	[sg.Text('Desired yükseklik:')],
 	[sg.Slider(range=(1,500), default_value=10, size=(20,15), orientation='horizontal', font=('Helvetica', 12),key='desired')],
-    [sg.Text('Kp:')],
+	[sg.Text('Kp:')],
 	[sg.Slider(range=(1,500), default_value=10, size=(20,15), orientation='horizontal', font=('Helvetica', 12),key='kp')],
-    [sg.Text('Kd:')],
+	[sg.Text('Kd:')],
 	[sg.Slider(range=(1,500), default_value=10, size=(20,15), orientation='horizontal', font=('Helvetica', 12),key='kd')],
-    [sg.Text('Ki:')],
+	[sg.Text('Ki:')],
 	[sg.Slider(range=(1,500), default_value=10, size=(20,15), orientation='horizontal', font=('Helvetica', 12),key='ki')],
-    [sg.Text('Direct:')],
+	[sg.Text('Direct:')],
 	[sg.Slider(range=(1,500), default_value=10, size=(20,15), orientation='horizontal', font=('Helvetica', 12),key='direct')],
 	[sg.Text('Summax:')],
 	[sg.Slider(range=(1,500), default_value=10, size=(20,15), orientation='horizontal', font=('Helvetica', 12),key='summax')],
 	[sg.Button('Save to csv'), sg.Checkbox('Enable PWM', default=True,key='pwm')],
-	[sg.Text('Always quit using here ->  '),sg.Quit()]]
-window  = sg.Window('EE407 Term Project GUI', auto_size_text=True, default_element_size=(40, 1)).Layout(layout)
+	[sg.Text('Always quit using here ->	 '),sg.Quit()]]
+window	= sg.Window('EE407 Term Project GUI', auto_size_text=True, default_element_size=(40, 1)).Layout(layout)
 pi = np.pi
 ports = serial.tools.list_ports.comports()
 try:
@@ -26,25 +28,29 @@ except:
 	print('Arduino is not connected! ')
 	sys.exit()
 port = default_port
-def splitInt(val):
-	val1 = val*100
-	valLeft = int(val1/100)
-	valRight= int(val1%100)
-	return (valLeft, valRight)
 class GUI():
 	def __init__(self,arduino):
-		# self.save_to_csv = False # True if self.values['csv'] == True else False
-		self.save_arr = np.zeros(4).reshape(1,4)									# Change this if you have different # of arrays
+		self.save_arr = np.zeros(4).reshape(1,4)						# Change this if you have different # of arrays
 		self.number_of_csv_files = len(os.listdir('csv/'))
-		self.errorArray = self.angleArray = self.motorArray = self.timeArray = np.zeros(4)
+		self.errorArray = self.angleArray = self.motorArray = self.timeArray = np.empty(0)
 		self.arduino = arduino
 		self.arduino.reset_input_buffer()
 		self.time_init = 0
 		self.first = True
+		# plt.ion()
+		# self.fig, self.ax = plt.subplots()
+		# self.line, = self.ax.plot([],[])
+		# self.line, = ax.plot(np.append(goster,self.timeArray)[-100:],np.append(goster,self.motorArray[-100:]))
 	def update(self):
 		self.event, self.values = window.Read(timeout=0) #timeout=50)
 		self.arduino_read(self.arduino)
 		self.save_or_not()
+		# goster = np.zeros(100)
+		# self.line.set_ydata(np.append(goster,np.array(self.motorArray,dtype=float))[-100:])  # update the data
+		# goster2 = np.append(goster,np.array(self.timeArray,dtype=float))[-100:]
+		# self.ax.set_xlim(goster2[-1]-5,goster2[-1])  # update the data 
+		# self.fig.canvas.draw()
+		# self.fig.canvas.flush_events()
 		self.data_prep()
 	def data_prep(self):
 		self.kp = int(self.values['kp'])
@@ -59,6 +65,7 @@ class GUI():
 			self.event = 'Save to csv'
 			self.save_or_not()
 			window.Close()
+			arduino.close()
 			sys.exit()
 		try:
 			self.arduino.write(struct.pack('>7B',self.kp,self.kd,self.ki,self.desired,self.Direct,self.sumMAX,self.enable_pwm))
@@ -88,11 +95,10 @@ class GUI():
 			self.first = False
 			self.time_init = float(A[0])
 		# print(A)
-		self.timeArray  = np.append(self.timeArray, (float(A[0]) - self.time_init) )
+		self.timeArray	= np.append(self.timeArray, (float(A[0]) - self.time_init) )
 		self.errorArray = np.append(self.errorArray, A[1])
 		self.angleArray = np.append(self.angleArray, A[2])
 		self.motorArray = np.append(self.motorArray, A[3])
-
 if __name__ == '__main__':
 	try:
 		arduino = serial.Serial(port, 19200)
@@ -102,10 +108,10 @@ if __name__ == '__main__':
 		print('Cannot find the arduino board. Probably the usb port entered is wrong(--port).')
 	else:
 		gui = GUI(arduino)
+		# ani = animation.FuncAnimation(fig, animate, np.append(, interval=25, blit=True)
+		# plt.show(block=False)
 		while True:
 			gui.update()
-		# sys.exit(window.Close())
-		print("DONE")
 		
 		
 		
